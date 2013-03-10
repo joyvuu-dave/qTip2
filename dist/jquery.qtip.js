@@ -1,12 +1,12 @@
 /*!
- * qTip2 - Pretty powerful tooltips - v2.0.1-31-
+ * qTip2 - Pretty powerful tooltips - v2.0.1-35-
  * http://qtip2.com
  *
  * Copyright (c) 2013 Craig Michael Thompson
  * Released under the MIT, GPL licenses
  * http://jquery.org/license
  *
- * Date: Tue Mar 5 2013 02:40 GMT+0000
+ * Date: Sun Mar 10 2013 03:07 GMT+0000
  * Plugins: svg ajax tips modal viewport imagemap ie6
  * Styles: basic css3
  */
@@ -997,7 +997,7 @@ function QTip(target, options, id, attr)
 			if(!tooltip.is(':animated') && visible === state && sameTarget) { return self; }
 
 			// tooltipshow/tooltiphide events
-			if(!self._triggerEvent(type, [90])) { return self; }
+			if(!self._triggerEvent(type, [90]) && !self.destroyed) { return self; }
 
 			// Set ARIA hidden status attribute
 			$.attr(tooltip[0], 'aria-hidden', !!!state);
@@ -1401,12 +1401,21 @@ function QTip(target, options, id, attr)
 				delete self.checks;
 			}
 
-			// Destroy after hide if no immediate
-			if(immediate === TRUE) { process(); }
-			else {
-				tooltip.bind('tooltiphidden', process);
+			var isHiding = FALSE;
+
+			// If an immediate destory is needed
+			if(immediate !== TRUE) {
+				// Check to see if the hide call below suceeds
+				tooltip.bind('tooltiphide', function() {
+					// Set the hiding flag and process on hidden
+					isHiding = TRUE;
+					tooltip.bind('tooltiphidden', process);
+				});
 				self.hide();
 			}
+
+			// If we're not in the process of hiding... process
+			if(!isHiding) { process(); }
 
 			return target;
 		}
@@ -1795,8 +1804,8 @@ $.each(PLUGINS.fn, function(name, func) {
 if(!$.ui) {
 	$['cleanData'+replaceSuffix] = $.cleanData;
 	$.cleanData = function( elems ) {
-		for(var i = 0, elem; (elem = elems[i]) !== undefined && elem.getAttribute(HASATTR); i++) {
-			try { $( elem ).triggerHandler('removeqtip');}
+		for(var i = 0, elem; (elem = $( elems[i] )).length && elem.attr(HASATTR); i++) {
+			try { elem.triggerHandler('removeqtip'); }
 			catch( e ) {}
 		}
 		$['cleanData'+replaceSuffix]( elems );
@@ -1804,7 +1813,7 @@ if(!$.ui) {
 }
 
 // Set global qTip properties
-QTIP.version = '2.0.1-31-';
+QTIP.version = '2.0.1-35-';
 QTIP.nextid = 0;
 QTIP.inactiveEvents = 'click dblclick mousedown mouseup mousemove mouseleave mouseenter'.split(' ');
 QTIP.zindex = 15000;
@@ -2765,7 +2774,7 @@ OVERLAY = function()
 		if($.expr[':'].focusable) { return $.expr[':'].focusable; }
 
 		var isTabIndexNotNaN = !isNaN($.attr(element, 'tabindex')),
-			nodeName = element.nodeName.toLowerCase(),
+			nodeName = element.nodeName && element.nodeName.toLowerCase(),
 			map, mapName, img;
 
 		if('area' === nodeName) {
