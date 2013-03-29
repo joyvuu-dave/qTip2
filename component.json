@@ -1,7 +1,7 @@
 {
   "name":         "qTip2",
   "version":      "2.0.1",
-  "main":         ["./dist/jquery.qtip2.min.js", "./dist/jquery.qtip2.min.css"],
+  "main":         ["./dist/jquery.qtip.min.js", "./dist/jquery.qtip.min.css"],
   "dependencies": {
   }
 }
